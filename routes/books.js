@@ -1,5 +1,9 @@
 const express = require("express");
 const Book = require("../models/book");
+// import jsonschema and bookschema 
+const jsonschema = require('jsonschema') 
+const bookSchema = require('../schemas/bookSchema');
+const ExpressError = require("../expressError");
 
 const router = new express.Router();
 
@@ -15,10 +19,11 @@ router.get("/", async function (req, res, next) {
 });
 
 /** GET /[id]  => {book: book} */
-
-router.get("/:id", async function (req, res, next) {
+// find book per ISBN, not id 
+router.get("/:isbn", async function (req, res, next) {
   try {
-    const book = await Book.findOne(req.params.id);
+    // ISBN is passed on req.params
+    const book = await Book.findOne(req.params.isbn);
     return res.json({ book });
   } catch (err) {
     return next(err);
@@ -29,10 +34,22 @@ router.get("/:id", async function (req, res, next) {
 
 router.post("/", async function (req, res, next) {
   try {
-    const book = await Book.create(req.body);
-    return res.status(201).json({ book });
-  } catch (err) {
-    return next(err);
+    // validate our book against bookSchema
+    const result = jsonschema.validate(req.body, bookSchema) 
+    // if not valid... 
+    if(!result.valid) {
+      // throw error
+      let listOfErrors = result.errors.map(error => error.stack)
+      let error = new ExpressError(listOfErrors, 400) 
+      return next(error)
+    }
+    // create a book 
+    const book = await Book.create(req.body)
+    // return book 
+    return res.status(201).json({book})
+
+  } catch(err) {
+    return next(err) 
   }
 });
 
