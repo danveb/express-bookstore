@@ -1,0 +1,6 @@
+$ npm init --y 
+$ npm install (all packages from package.json)  
+$ createdb books 
+$ psql < data.sql (or \c books; \i data.sql)
+$ nodemon server.js (tour the application at localhost:3000) 
+$ jest -i (works thru all tests) 
